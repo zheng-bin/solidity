@@ -37,14 +37,17 @@ The elements of structs and arrays are stored after each other, just as if they 
 Due to their unpredictable size, mapping and dynamically-sized array types use a Keccak-256 hash
 computation to find the starting position of the value or the array data. These starting positions are always full stack slots.
 
+Mapping and dynamic array
+=========================
+
 The mapping or the dynamic array itself
 occupies an (unfilled) slot in storage at some position ``p`` according to the above rule (or by
-recursively applying this rule for mappings to mappings or arrays of arrays). For a dynamic array, this slot stores the number of elements in the array (byte arrays and strings are an exception here, see below). For a mapping, the slot is unused (but it is needed so that two equal mappings after each other will use a different hash distribution).
-Array data is located at ``keccak256(p)`` and the value corresponding to a mapping key
+recursively applying this rule for mappings to mappings or arrays of arrays). For a dynamic array,
+this slot stores the number of elements in the array (byte arrays and strings are an exception here, see below).
+For a mapping, the slot is unused (but it is needed so that two equal mappings after each other will use a different
+hash distribution). Array data is located at ``keccak256(p)`` and the value corresponding to a mapping key
 ``k`` is located at ``keccak256(k . p)`` where ``.`` is concatenation. If the value is again a
 non-elementary type, the positions are found by adding an offset of ``keccak256(k . p)``.
-
-``bytes`` and ``string`` store their data in the same slot where also the length is stored if they are short. In particular: If the data is at most ``31`` bytes long, it is stored in the higher-order bytes (left aligned) and the lowest-order byte stores ``length * 2``. If it is longer, the main slot stores ``length * 2 + 1`` and the data is stored as usual in ``keccak256(slot)``.
 
 So for the following contract snippet::
 
@@ -57,6 +60,54 @@ So for the following contract snippet::
     }
 
 The position of ``data[4][9].b`` is at ``keccak256(uint256(9) . keccak256(uint256(4) . uint256(1))) + 1``.
+
+Adding elements to or removing them from a dynamically-sized array will increment or decrement the number
+of elements which is stored in the slot. For arrays that are not of type ``bytes`` or ``string`` this is
+straight-forward, since data is stored in a different slot.
+
+
+``bytes`` and ``string``
+------------------------
+
+``bytes`` and ``string`` store their data in the same slot where also the length is stored if they are short. In
+particular: If the data is at most ``31`` bytes long, it is stored in the higher-order bytes (left aligned) and the
+lowest-order byte stores ``length * 2``. If it is longer, the main slot stores ``length * 2 + 1`` and the data is
+stored as usual in ``keccak256(slot)``.
+
+So for the following contract snippet::
+
+    pragma solidity ^0.4.0;
+
+    contract C {
+      bytes data;
+      function f() {
+        data.push(3);
+        data.push(5);
+        data.push(7);
+      }
+    }
+
+The storage layout will look like this (slot is 32 bytes, most-significant byte is on the left)::
+
+    03 05 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 03
+
+
+Calling ``push()`` will just add ``2`` to the length (lowest-order byte) except for the case where a transition from a
+short byte array to a long byte array happens. There the data is copied to a new slot and the old one is cleared
+(except for length). This happens if the length is exactly ``31``, which means that the lowest-order byte must
+be ``31 * 2 + 0``.
+
+Calling ``pop()`` will substract ``2`` from the length (lowest-order byte) except for the case where a transition
+from a long byte array to a short byte array happens. There the data is copied from the slot where it's stored to the slot
+that holds the length. This happens if the length is exactly ``31``, which means that the lowest-order byte must be ``31 * 2 + 0``.
+
+Deleting elements is done by masking the current slot. If the data is at most ``31`` bytes long, the mask will cover these, but
+also contains some additional bits which mask the higher bits of the length. This provides some basic fault tolerance in case
+the length is corrupted or invalid (e.g. data is ``31`` bytes long but the higher bits of length are set, which would mean that
+length is greater than ``31``).
+
+Handling invalid encoded slots is currently not supported but may be added in the future.
+
 
 .. index: memory layout
 
