@@ -91,15 +91,12 @@ The storage layout will look like this (slot is 32 bytes, most-significant byte 
 
     03 05 07 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 03
 
-
-Calling ``push()`` will just add ``2`` to the length (lowest-order byte) except for the case where a transition from a
-short byte array to a long byte array happens. There the data is copied to a new slot and the old one is cleared
-(except for length). This happens if the length is exactly ``31``, which means that the lowest-order byte must
-be ``31 * 2 + 0``.
-
-Calling ``pop()`` will substract ``2`` from the length (lowest-order byte) except for the case where a transition
-from a long byte array to a short byte array happens. There the data is copied from the slot where it's stored to the slot
-that holds the length. This happens if the length is exactly ``31``, which means that the lowest-order byte must be ``31 * 2 + 0``.
+Calling ``push()`` or ``pop()`` will just add ``2`` to or subtract ``2`` from the length (lowest-order byte)
+except for the case where a transition from a short to a long or a long to a short byte array happens. If a transition
+from a short to a long byte array happens, the data is copied to a new slot and the current one is been cleared
+(except for the length). If a transition from a long to a short byte array happens, the data is copied from
+the slot where it's stored to the slot that holds the length. These transitions are triggered in both cases if the
+length is exactly ``31``, which means that the lowest-order byte must be ``31 * 2 + 0``.
 
 Deleting elements is done by masking the current slot. If the data is at most ``31`` bytes long, the mask will cover these, but
 also contains some additional bits which mask the higher bits of the length. This provides some basic fault tolerance in case
