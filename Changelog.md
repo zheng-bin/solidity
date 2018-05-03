@@ -8,6 +8,7 @@ Breaking Changes:
  * Type Checker: Disallow arithmetic operations for Boolean variables.
 
 Features:
+ * Code generator: Allocate and free local variables according to their scope.
 
 Bugfixes:
 
