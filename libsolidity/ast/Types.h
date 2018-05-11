@@ -29,6 +29,7 @@
 
 #include <libdevcore/Common.h>
 #include <libdevcore/CommonIO.h>
+#include <libdevcore/Result.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/rational.hpp>
@@ -52,26 +53,6 @@ using TypePointers = std::vector<TypePointer>;
 using rational = boost::rational<dev::bigint>;
 
 enum class DataLocation { Storage, CallData, Memory };
-
-/**
- * Simple generic result that holds a value and an optional message.
- * The convenient usage of this class relies on implicite conversion that
- * will work most of the time.
- */
-template <class T>
-class Result
-{
-public:
-	Result(T const& _value, std::string const& _error = ""): m_value(std::move(_value)), m_error(_error) {}
-
-	T get() const { return m_value; }
-	std::string error() const { return m_error; }
-private:
-	T m_value;
-	std::string m_error;
-};
-
-//using TypeResult = Result<TypePointer>;
 
 
 /**
