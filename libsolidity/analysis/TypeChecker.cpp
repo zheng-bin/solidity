@@ -1405,7 +1405,7 @@ bool TypeChecker::visit(Assignment const& _assignment)
 	{
 		// compound assignment
 		_assignment.rightHandSide().accept(*this);
-		Result<TypePointer> result = t->binaryOperatorResult(
+		TypeResult result = t->binaryOperatorResult(
 			Token::AssignmentToBinaryOp(_assignment.assignmentOperator()),
 			type(_assignment.rightHandSide())
 		);
@@ -1559,7 +1559,7 @@ void TypeChecker::endVisit(BinaryOperation const& _operation)
 {
 	TypePointer const& leftType = type(_operation.leftExpression());
 	TypePointer const& rightType = type(_operation.rightExpression());
-	Result<TypePointer> result = leftType->binaryOperatorResult(_operation.getOperator(), rightType);
+	TypeResult result = leftType->binaryOperatorResult(_operation.getOperator(), rightType);
 	TypePointer commonType = result.get();
 	if (!commonType)
 	{
