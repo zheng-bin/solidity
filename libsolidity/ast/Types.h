@@ -62,13 +62,13 @@ template <class T>
 class Result
 {
 public:
-	Result(T const& _value, std::string const& _message = ""): m_value(_value), m_message(_message) {}
+	Result(T const& _value, std::string const& _error = ""): m_value(std::move(_value)), m_error(_error) {}
 
-	T value() const { return m_value; }
-	std::string message() const { return m_message; }
+	T get() const { return m_value; }
+	std::string error() const { return m_error; }
 private:
 	T m_value;
-	std::string m_message;
+	std::string m_error;
 };
 
 //using TypeResult = Result<TypePointer>;
@@ -202,7 +202,7 @@ public:
 	virtual Result<bool> isImplicitlyConvertibleTo(Type const& _other) const { return *this == _other; }
 	virtual bool isExplicitlyConvertibleTo(Type const& _convertTo) const
 	{
-		return isImplicitlyConvertibleTo(_convertTo).value();
+		return isImplicitlyConvertibleTo(_convertTo).get();
 	}
 	/// @returns the resulting type of applying the given unary operator or an empty pointer if
 	/// this is not possible.
