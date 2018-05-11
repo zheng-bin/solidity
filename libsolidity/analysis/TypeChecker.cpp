@@ -589,7 +589,7 @@ void TypeChecker::endVisit(InheritanceSpecifier const& _inheritance)
 			}
 		}
 		for (size_t i = 0; i < arguments->size(); ++i)
-			if (!type(*(*arguments)[i])->isImplicitlyConvertibleTo(*parameterTypes[i]))
+			if (!type(*(*arguments)[i])->isImplicitlyConvertibleTo(*parameterTypes[i]).value())
 				m_errorReporter.typeError(
 					(*arguments)[i]->location(),
 					"Invalid type for argument in constructor call. "
@@ -850,7 +850,7 @@ void TypeChecker::visitManually(
 		return;
 	}
 	for (size_t i = 0; i < arguments.size(); ++i)
-		if (!type(*arguments[i])->isImplicitlyConvertibleTo(*type(*(*parameters)[i])))
+		if (!type(*arguments[i])->isImplicitlyConvertibleTo(*type(*(*parameters)[i])).value())
 			m_errorReporter.typeError(
 				arguments[i]->location(),
 				"Invalid type for argument in modifier invocation. "
@@ -1036,7 +1036,7 @@ void TypeChecker::endVisit(Return const& _return)
 	{
 		if (tupleType->components().size() != params->parameters().size())
 			m_errorReporter.typeError(_return.location(), "Different number of arguments in return statement than in returns declaration.");
-		else if (!tupleType->isImplicitlyConvertibleTo(TupleType(returnTypes)))
+		else if (!tupleType->isImplicitlyConvertibleTo(TupleType(returnTypes)).value())
 			m_errorReporter.typeError(
 				_return.expression()->location(),
 				"Return argument type " +
@@ -1051,7 +1051,7 @@ void TypeChecker::endVisit(Return const& _return)
 	else
 	{
 		TypePointer const& expected = type(*params->parameters().front());
-		if (!type(*_return.expression())->isImplicitlyConvertibleTo(*expected))
+		if (!type(*_return.expression())->isImplicitlyConvertibleTo(*expected).value())
 			m_errorReporter.typeError(
 				_return.expression()->location(),
 				"Return argument type " +
@@ -1255,7 +1255,7 @@ bool TypeChecker::visit(VariableDeclarationStatement const& _statement)
 		else
 		{
 			var.accept(*this);
-			if (!valueComponentType->isImplicitlyConvertibleTo(*var.annotation().type))
+			if (!valueComponentType->isImplicitlyConvertibleTo(*var.annotation().type).value())
 			{
 				if (
 					valueComponentType->category() == Type::Category::RationalNumber &&
@@ -1405,7 +1405,7 @@ bool TypeChecker::visit(Assignment const& _assignment)
 	{
 		// compound assignment
 		_assignment.rightHandSide().accept(*this);
-		TypeResult result = t->binaryOperatorResult(
+		Result<TypePointer> result = t->binaryOperatorResult(
 			Token::AssignmentToBinaryOp(_assignment.assignmentOperator()),
 			type(_assignment.rightHandSide())
 		);
@@ -1559,7 +1559,7 @@ void TypeChecker::endVisit(BinaryOperation const& _operation)
 {
 	TypePointer const& leftType = type(_operation.leftExpression());
 	TypePointer const& rightType = type(_operation.rightExpression());
-	TypeResult result = leftType->binaryOperatorResult(_operation.getOperator(), rightType);
+	Result<TypePointer> result = leftType->binaryOperatorResult(_operation.getOperator(), rightType);
 	TypePointer commonType = result.value();
 	if (!commonType)
 	{
@@ -1841,7 +1841,7 @@ bool TypeChecker::visit(FunctionCall const& _functionCall)
 						m_errorReporter.typeError(arguments[i]->location(), "This type cannot be encoded.");
 				}
 			}
-			else if (!type(*arguments[i])->isImplicitlyConvertibleTo(*parameterTypes[i]))
+			else if (!type(*arguments[i])->isImplicitlyConvertibleTo(*parameterTypes[i]).value())
 				m_errorReporter.typeError(
 					arguments[i]->location(),
 					"Invalid type for argument in function call. "
@@ -1888,7 +1888,7 @@ bool TypeChecker::visit(FunctionCall const& _functionCall)
 						{
 							found = true;
 							// check type convertible
-							if (!type(*arguments[i])->isImplicitlyConvertibleTo(*parameterTypes[j]))
+							if (!type(*arguments[i])->isImplicitlyConvertibleTo(*parameterTypes[j]).value())
 								m_errorReporter.typeError(
 									arguments[i]->location(),
 									"Invalid type for argument in function call. "
@@ -2043,7 +2043,7 @@ bool TypeChecker::visit(MemberAccess const& _memberAccess)
 	annotation.type = possibleMembers.front().type;
 
 	if (auto funType = dynamic_cast<FunctionType const*>(annotation.type.get()))
-		if (funType->bound() && !exprType->isImplicitlyConvertibleTo(*funType->selfType()))
+		if (funType->bound() && !exprType->isImplicitlyConvertibleTo(*funType->selfType()).value())
 			m_errorReporter.typeError(
 				_memberAccess.location(),
 				"Function \"" + memberName + "\" cannot be called on an object of type " +
@@ -2362,7 +2362,7 @@ Declaration const& TypeChecker::dereference(UserDefinedTypeName const& _typeName
 void TypeChecker::expectType(Expression const& _expression, Type const& _expectedType)
 {
 	_expression.accept(*this);
-	if (!type(_expression)->isImplicitlyConvertibleTo(_expectedType))
+	if (!type(_expression)->isImplicitlyConvertibleTo(_expectedType).value())
 	{
 		if (
 			type(_expression)->category() == Type::Category::RationalNumber &&
