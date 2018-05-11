@@ -41,10 +41,28 @@ public:
 	{
 	}
 
-	T const& get() const { return m_value; }
+	operator T() const { return m_value; }
+	operator bool() const { return m_value ? true : false; }
 	std::string const& error() const { return m_error; }
 private:
 	T m_value;
+	std::string m_error;
+};
+
+template <>
+class Result<bool>
+{
+public:
+	Result(bool const& _value, std::string const& _error = ""):
+		m_value(_value),
+		m_error(_error)
+	{
+	}
+
+	operator bool() const { return m_value; }
+	std::string const& error() const { return m_error; }
+private:
+	bool m_value;
 	std::string m_error;
 };
 

@@ -356,9 +356,9 @@ TypePointer Type::commonType(TypePointer const& _a, TypePointer const& _b)
 {
 	if (!_a || !_b)
 		return TypePointer();
-	else if (_a->mobileType() && _b->isImplicitlyConvertibleTo(*_a->mobileType()).get())
+	else if (_a->mobileType() && _b->isImplicitlyConvertibleTo(*_a->mobileType()))
 		return _a->mobileType();
-	else if (_b->mobileType() && _a->isImplicitlyConvertibleTo(*_b->mobileType()).get())
+	else if (_b->mobileType() && _a->isImplicitlyConvertibleTo(*_b->mobileType()))
 		return _b->mobileType();
 	else
 		return TypePointer();
@@ -400,7 +400,7 @@ MemberList::MemberMap Type::boundFunctions(Type const& _type, ContractDefinition
 				seenFunctions.insert(function);
 				FunctionType funType(*function, false);
 				if (auto fun = funType.asMemberFunction(true, true))
-					if (_type.isImplicitlyConvertibleTo(*fun->selfType()).get())
+					if (_type.isImplicitlyConvertibleTo(*fun->selfType()))
 						members.push_back(MemberList::Member(function->name(), fun, function));
 			}
 		}
@@ -1384,7 +1384,7 @@ BoolResult ContractType::isImplicitlyConvertibleTo(Type const& _convertTo) const
 bool ContractType::isExplicitlyConvertibleTo(Type const& _convertTo) const
 {
 	return
-		isImplicitlyConvertibleTo(_convertTo).get() ||
+		isImplicitlyConvertibleTo(_convertTo) ||
 		_convertTo.category() == Category::Integer ||
 		_convertTo.category() == Category::Contract;
 }
@@ -1478,7 +1478,7 @@ BoolResult ArrayType::isImplicitlyConvertibleTo(const Type& _convertTo) const
 	if (convertTo.location() == DataLocation::Storage && !convertTo.isPointer())
 	{
 		// Less restrictive conversion, since we need to copy anyway.
-		if (!baseType()->isImplicitlyConvertibleTo(*convertTo.baseType()).get())
+		if (!baseType()->isImplicitlyConvertibleTo(*convertTo.baseType()))
 			return false;
 		if (convertTo.isDynamicallySized())
 			return true;
@@ -1505,7 +1505,7 @@ BoolResult ArrayType::isImplicitlyConvertibleTo(const Type& _convertTo) const
 
 bool ArrayType::isExplicitlyConvertibleTo(const Type& _convertTo) const
 {
-	if (isImplicitlyConvertibleTo(_convertTo).get())
+	if (isImplicitlyConvertibleTo(_convertTo))
 		return true;
 	// allow conversion bytes <-> string
 	if (_convertTo.category() != category())
@@ -2205,7 +2205,7 @@ BoolResult TupleType::isImplicitlyConvertibleTo(Type const& _other) const
 			auto const& t = targets[fillRight ? i : targets.size() - i - 1];
 			if (!s && t)
 				return false;
-			else if (s && t && !s->isImplicitlyConvertibleTo(*t).get())
+			else if (s && t && !s->isImplicitlyConvertibleTo(*t))
 				return false;
 		}
 		return true;
@@ -2782,7 +2782,7 @@ TypePointer FunctionType::interfaceType(bool /*_inLibrary*/) const
 bool FunctionType::canTakeArguments(TypePointers const& _argumentTypes, TypePointer const& _selfType) const
 {
 	solAssert(!bound() || _selfType, "");
-	if (bound() && !_selfType->isImplicitlyConvertibleTo(*selfType()).get())
+	if (bound() && !_selfType->isImplicitlyConvertibleTo(*selfType()))
 		return false;
 	TypePointers paramTypes = parameterTypes();
 	if (takesArbitraryParameters())
@@ -2796,7 +2796,7 @@ bool FunctionType::canTakeArguments(TypePointers const& _argumentTypes, TypePoin
 			paramTypes.cbegin(),
 			[](TypePointer const& argumentType, TypePointer const& parameterType)
 			{
-				return argumentType->isImplicitlyConvertibleTo(*parameterType).get();
+				return argumentType->isImplicitlyConvertibleTo(*parameterType);
 			}
 		);
 }

@@ -185,7 +185,7 @@ public:
 	virtual BoolResult isImplicitlyConvertibleTo(Type const& _other) const { return *this == _other; }
 	virtual bool isExplicitlyConvertibleTo(Type const& _convertTo) const
 	{
-		return isImplicitlyConvertibleTo(_convertTo).get();
+		return isImplicitlyConvertibleTo(_convertTo);
 	}
 	/// @returns the resulting type of applying the given unary operator or an empty pointer if
 	/// this is not possible.

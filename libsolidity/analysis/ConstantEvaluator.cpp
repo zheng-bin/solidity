@@ -41,8 +41,8 @@ void ConstantEvaluator::endVisit(BinaryOperation const& _operation)
 	auto right = type(_operation.rightExpression());
 	if (left && right)
 	{
-		auto result = left->binaryOperatorResult(_operation.getOperator(), right);
-		if (!result.get())
+		TypeResult result = left->binaryOperatorResult(_operation.getOperator(), right);
+		if (!result)
 		{
 			if (result.error().empty())
 				m_errorReporter.fatalTypeError(
@@ -64,7 +64,7 @@ void ConstantEvaluator::endVisit(BinaryOperation const& _operation)
 			_operation,
 			Token::isCompareOp(_operation.getOperator()) ?
 			make_shared<BoolType>() :
-			result.get()
+			TypePointer(result)
 		);
 	}
 }
