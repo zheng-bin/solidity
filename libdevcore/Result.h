@@ -21,8 +21,6 @@
 namespace dev {
 
 /// Simple generic result that holds a value and an optional error message.
-/// The convenient usage of this class relies on implicite type conversion
-/// that will work most of the time:
 ///
 /// Result<bool> check()
 /// {
@@ -35,35 +33,17 @@ template <class T>
 class Result
 {
 public:
-	Result(T const& _value, std::string const& _error = ""):
-		m_value(_value),
-		m_error(_error)
-	{
-	}
+	Result(T _value): m_value(_value) {}
+	Result(T _value, std::string const& _err): m_value(_value), m_err(_err) {}
 
-	operator T() const { return m_value; }
 	operator bool() const { return m_value ? true : false; }
-	std::string const& error() const { return m_error; }
+
+	T const& get() const { return m_value; }
+	std::string const& error() const { return m_err; }
+
 private:
 	T m_value;
-	std::string m_error;
-};
-
-template <>
-class Result<bool>
-{
-public:
-	Result(bool const& _value, std::string const& _error = ""):
-		m_value(_value),
-		m_error(_error)
-	{
-	}
-
-	operator bool() const { return m_value; }
-	std::string const& error() const { return m_error; }
-private:
-	bool m_value;
-	std::string m_error;
+	std::string m_err;
 };
 
 }
