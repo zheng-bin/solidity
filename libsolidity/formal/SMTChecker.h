@@ -58,6 +58,7 @@ private:
 	virtual bool visit(IfStatement const& _node) override;
 	virtual bool visit(WhileStatement const& _node) override;
 	virtual bool visit(ForStatement const& _node) override;
+	virtual bool visit(VariableDeclarationStatement const& _node) override;
 	virtual void endVisit(VariableDeclarationStatement const& _node) override;
 	virtual void endVisit(ExpressionStatement const& _node) override;
 	virtual void endVisit(Assignment const& _node) override;
@@ -140,6 +141,7 @@ private:
 
 	/// Sets the value of the declaration to zero.
 	void setZeroValue(Declaration const& _decl);
+	void setZeroValue(Declaration const* _decl);
 	/// Resets the variable to an unknown value (in its range).
 	void setUnknownValue(Declaration const& decl);
 
@@ -160,6 +162,8 @@ private:
 	void addPathConjoinedExpression(smt::Expression const& _e);
 	/// Add to the solver: the given expression implied by the current path conditions
 	void addPathImpliedExpression(smt::Expression const& _e);
+
+
 
 	std::shared_ptr<smt::SolverInterface> m_interface;
 	std::shared_ptr<VariableUsage> m_variableUsage;

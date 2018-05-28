@@ -73,8 +73,13 @@ void SMTChecker::endVisit(ContractDefinition const&)
 
 void SMTChecker::endVisit(VariableDeclaration const& _varDecl)
 {
-	if (_varDecl.isLocalVariable() && _varDecl.type()->isValueType() &&_varDecl.value())
-		assignment(_varDecl, *_varDecl.value(), _varDecl.location());
+	if (_varDecl.isLocalVariable() && _varDecl.type()->isValueType())
+	{
+		if (_varDecl.value())
+			assignment(_varDecl, *_varDecl.value(), _varDecl.location());
+		else
+			setZeroValue(&_varDecl);
+	}
 }
 
 bool SMTChecker::visit(FunctionDefinition const& _function)
@@ -193,23 +198,43 @@ bool SMTChecker::visit(ForStatement const& _node)
 	return false;
 }
 
+bool SMTChecker::visit(VariableDeclarationStatement const& _varDecl)
+{
+
+	if (_varDecl.declarations().size() != 1)
+	{
+		TupleExpression const* _tuple;
+		auto& _decls = _varDecl.declarations();
+		if (_varDecl.initialValue() && (_tuple = dynamic_cast<TupleExpression const*>(_varDecl.initialValue())))
+		{
+			_varDecl.initialValue()->accept(*this);
+			solAssert(_varDecl.declarations().size() == _tuple->components().size(), "");
+			auto& _comps = _tuple->components();
+			for (unsigned i = 0; i < _decls.size(); ++i)
+			{
+				if (_decls[i])
+					assignment(*_decls[i], *_comps[i], _decls[i]->location());
+			}
+		}
+		else
+		{
+			for (auto _decl: _decls)
+				if (_decl)
+					setUnknownValue(*_decl);
+		}
+		return false;
+	}
+	return true;
+}
+
+
 void SMTChecker::endVisit(VariableDeclarationStatement const& _varDecl)
 {
-	if (_varDecl.declarations().size() != 1)
-		m_errorReporter.warning(
-			_varDecl.location(),
-			"Assertion checker does not yet support such variable declarations."
-		);
-	else if (knownVariable(*_varDecl.declarations()[0]))
+	if (_varDecl.declarations().size() == 1 && knownVariable(*_varDecl.declarations()[0]))
 	{
 		if (_varDecl.initialValue())
 			assignment(*_varDecl.declarations()[0], *_varDecl.initialValue(), _varDecl.location());
 	}
-	else
-		m_errorReporter.warning(
-			_varDecl.location(),
-			"Assertion checker does not yet implement such variable declarations."
-		);
 }
 
 void SMTChecker::endVisit(ExpressionStatement const&)
@@ -223,6 +248,38 @@ void SMTChecker::endVisit(Assignment const& _assignment)
 			_assignment.location(),
 			"Assertion checker does not yet implement compound assignment."
 		);
+	else if (TupleExpression const* leftTuple = dynamic_cast<TupleExpression const*>(&_assignment.leftHandSide()))
+	{
+		auto& leftComps = leftTuple->components();
+		TupleExpression const* rightTuple = dynamic_cast<TupleExpression const*>(&_assignment.rightHandSide());
+		if (rightTuple)
+		{
+			auto& rightComps = rightTuple->components();
+			solAssert(leftComps.size() == rightComps.size(), "");
+			for (unsigned i = 0; i < leftComps.size(); ++i)
+			{
+				if (Identifier const* var = dynamic_cast<Identifier const*>(&*leftComps[i]))
+					assignment(*var->annotation().referencedDeclaration, *rightComps[i], leftComps[i]->location());
+				else
+					m_errorReporter.warning(
+						leftComps[i]->location(),
+						"Assertion checker does not yet implement this type of assignment."
+					);
+
+			}
+		}
+		else
+			for (unsigned i = 0; i < leftComps.size(); ++i)
+			{
+				Identifier const* var = dynamic_cast<Identifier const*>(&*leftComps[i]);
+				solAssert(var, "");
+				// This isn't a variable declaration so the
+				// SSA index has to be incremented.
+				auto _decl = var->annotation().referencedDeclaration;
+				newValue(*_decl);
+				setUnknownValue(*_decl);
+			}
+	}
 	else if (!SSAVariable::isSupportedType(_assignment.annotation().type->category()))
 		m_errorReporter.warning(
 			_assignment.location(),
@@ -249,8 +306,11 @@ void SMTChecker::endVisit(Assignment const& _assignment)
 		);
 }
 
-void SMTChecker::endVisit(TupleExpression const& _tuple)
+void SMTChecker::endVisit(TupleExpression const& /*_tuple*/)
 {
+	//for (auto& _comp: _tuple.components())
+	//	defineExpr(*_comp, expr(*_comp));
+	/*
 	if (_tuple.isInlineArray() || _tuple.components().size() != 1)
 		m_errorReporter.warning(
 			_tuple.location(),
@@ -258,6 +318,7 @@ void SMTChecker::endVisit(TupleExpression const& _tuple)
 		);
 	else
 		defineExpr(_tuple, expr(*_tuple.components()[0]));
+		*/
 }
 
 void SMTChecker::checkUnderOverflow(smt::Expression _value, IntegerType const& _type, SourceLocation const& _location)
@@ -729,8 +790,7 @@ smt::CheckResult SMTChecker::checkSatisfiable()
 void SMTChecker::initializeLocalVariables(FunctionDefinition const& _function)
 {
 	for (auto const& variable: _function.localVariables())
-		if (createVariable(*variable))
-			setZeroValue(*variable);
+		createVariable(*variable);
 
 	for (auto const& param: _function.parameters())
 		if (createVariable(*param))
@@ -834,6 +894,11 @@ void SMTChecker::setZeroValue(Declaration const& _decl)
 {
 	solAssert(knownVariable(_decl), "");
 	m_variables.at(&_decl).setZeroValue();
+}
+
+void SMTChecker::setZeroValue(Declaration const* _decl)
+{
+	setZeroValue(*_decl);
 }
 
 void SMTChecker::setUnknownValue(Declaration const& _decl)
