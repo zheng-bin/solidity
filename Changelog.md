@@ -25,7 +25,39 @@ Language Features:
 Compiler Features:
  * Type Checker: Show named argument in case of error.
 
+Breaking changes already present in earlier releases via the "experimental 0.5.0" mode, which are not optional anymore (sorted by importance):
+ * General: Disallow legacy constructor syntax (use ``constructor`` keyword).
+ * General: Require ``emit`` prefix when calling events.
+ * General: Scoping rules change from function-based (JavaScript) to block-based (C99/C++-style).
+ * Type Checker: Contract types do not include members from ``address`` anymore.
+ * Type Checker: Make ``keccak256``, ``sha256`` and ``ripemd160`` require a single bytes argument (use ``abi.encodePacked(...)``).
+ * Type Checker: Enforce ``view`` and ``pure``.
+ * Code Generator: Use ``STATICCALL`` opcode for calling ``view`` and ``pure`` functions.
+ * Code Generator: Assert that ``k != 0`` for ``mulmod(a, b, k)`` and ``addmod(a, b, k)`.
+ * Inline Assembly: Enforce strict mode (no jumps, to direct stack manipulations).
+ * Type Checker: Interface functions have to be external.
+ * Type Checker: Local variables of reference type require ``storage`` or ``memory`` keyword.
+ * Type Checker: Fallback function has to be ``external``.
+ * Syntax Checker: Deprecate ``throw``.
+ * Syntax Checker: Disallow ``var``.
+ * Syntax Checker: Require explicit visibility for functions.
+ * Syntax Checker: Remove unary ``+``.
+ * Type Checker: Disallow uninitialized storage pointers.
+ * Type Checker: Deprecate the ``years`` unit denomination.
+ * Type Checker: Make literals (without explicit type casting) an error for tight packing.
+ * Type Checker: Disallow wildcard tuple assignments.
+ * Type Checker: Disallow empty tuple components.
+ * Type Checker: Disallow empty parentheses for base constructor if it has parameters.
+ * Type Checker: Error when using no parentheses in modifier-style constructor calls.
+ * Syntax Checker: Deprecate the ``callcode`` member function.
+ * Static Analyzer: Disallow duplicated super constructor calls.
+ * Syntax Checker: Disallow empty structs.
+ * Syntax Checker: Disallow modifiers on functions without implementation.
+ * Type Checker: Disallow combining hex numbers and unit denominations.
+ * Type Checker: Disallow non-pure constant state variables.
+
 Bugfixes:
+
 
 ### 0.4.24 (2018-05-16)
 
