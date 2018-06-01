@@ -10,7 +10,7 @@ Breaking Changes:
  * General: Disallow declaring empty structs.
  * General: Disallow ``sha3`` and ``suicide`` aliases.
  * General: Introduce ``emit`` as a keyword instead of parsing it as identifier.
- * General: New keywords: ``calldata``
+ * General: New keywords: ``calldata`` and ``constructor``
  * General: New reserved keywords: ``alias``, ``apply``, ``auto``, ``copyof``, ``define``, ``immutable``,
    ``implements``, ``macro``, ``mutable``, ``override``, ``partial``, ``promise``, ``reference``, ``sealed``,
    ``sizeof``, ``supports``, ``typedef`` and ``unchecked``.
