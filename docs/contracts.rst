@@ -723,22 +723,17 @@ the contract can only see the last 256 block hashes.
 
 Up to three parameters can
 receive the attribute ``indexed`` which will cause the respective arguments
-to be searched for: It is possible to filter for specific values of
-indexed arguments in the user interface.
+to be stored in a special data structure as so-called "topics", which allows them to be searched for,
+for example when filtering a sequence of blocks for certain events. Events can always
+be filtered by the address of the cantract that emitted the event. Also,
+the hash of the signature of the event is one of the topics except if you
+declared the event with ``anonymous`` specifier. This means that it is
+not possible to filter for specific anonymous events by name.
 
 If arrays (including ``string`` and ``bytes``) are used as indexed arguments, the
 Keccak-256 hash of it is stored as topic instead.
 
-The hash of the signature of the event is one of the topics except if you
-declared the event with ``anonymous`` specifier. This means that it is
-not possible to filter for specific anonymous events by name.
-
-All non-indexed arguments will be stored in the data part of the log.
-
-.. note::
-    Indexed arguments will not be stored themselves.  You can only
-    search for the values, but it is impossible to retrieve the
-    values themselves.
+All non-indexed arguments will be ABI-encoded into the data part of the log.
 
 ::
 
