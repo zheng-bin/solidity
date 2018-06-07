@@ -47,9 +47,10 @@ function test_truffle
       cd "$DIR"
       npm install
       find . -name soljson.js -exec cp "$SOLJSON" {} \;
-      if [ "$name" == "Gnosis" ]; then
-        # Replace fixed-version pragmas in Gnosis (part of Consensys best practice)
-        find contracts test -name '*.sol' -type f -print0 | xargs -0 sed -i -e 's/pragma solidity 0/pragma solidity ^0/'
+      if [ "$name" == "Gnosis" -o "$name" == "dYdX" ]
+      then
+        # Remove fixed-version pragmas
+        find contracts test -name '*.sol' -type f -print0 | xargs -0 sed -i -e 's/pragma solidity [^;]*;//'
       fi
       npm run test
     )
