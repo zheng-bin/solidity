@@ -84,23 +84,37 @@ bool SMTChecker::visit(FunctionDefinition const& _function)
 			_function.location(),
 			"Assertion checker does not yet support constructors and functions with modifiers."
 		);
-	m_currentFunction = &_function;
-	m_interface->reset();
-	m_pathConditions.clear();
+	if (isRootFunction())
+	{
+		m_interface->reset();
+		m_pathConditions.clear();
+		m_expressions.clear();
+		resetStateVariables();
+		initializeLocalVariables(_function);
+	}
+	else
+	{
+		initializeFunctionParameters(_function);
+	}
+	
+	m_currentFunction.push_back(&_function);
 	m_loopExecutionHappened = false;
-	resetStateVariables();
-	initializeLocalVariables(_function);
 	return true;
 }
 
-void SMTChecker::endVisit(FunctionDefinition const&)
+void SMTChecker::endVisit(FunctionDefinition const& _function)
 {
 	// TOOD we could check for "reachability", i.e. satisfiability here.
 	// We only handle local variables, so we clear at the beginning of the function.
 	// If we add storage variables, those should be cleared differently.
-	removeLocalVariables();
-	m_currentFunction = nullptr;
+	if (_function.returnParameterList())
+		m_functionReturn.push_back(currentValue(*(_function.returnParameters()[0])));
+	removeLocalVariables(*m_currentFunction.back());
+	m_currentFunction.pop_back();
+	if (!isRootFunction())
+		m_functionArguments.pop_back();
 }
+
 
 bool SMTChecker::visit(IfStatement const& _node)
 {
@@ -378,6 +392,34 @@ void SMTChecker::endVisit(FunctionCall const& _funCall)
 		checkBooleanNotConstant(*args[0], "Condition is always $VALUE.");
 		addPathImpliedExpression(expr(*args[0]));
 	}
+	else// if (funType.kind() == FunctionType::Kind::Internal)
+	{
+		Identifier const* _fun = dynamic_cast<Identifier const*>(&_funCall.expression());
+		FunctionDefinition const* _funDef = dynamic_cast<FunctionDefinition const*>(_fun->annotation().referencedDeclaration);
+		solAssert(_funDef, "");
+
+		auto callArgs = _funCall.arguments();
+		auto params = _funDef->parameters();
+		solAssert(callArgs.size() == params.size(), "");
+		vector<smt::Expression> funArgs;
+		for (auto arg: callArgs)
+			funArgs.push_back(expr(*arg));
+		m_functionArguments.push_back(funArgs);
+		_funDef->accept(*this);
+		if (_funDef->returnParameterList())
+		{
+			defineExpr(_funCall, m_functionReturn.back());
+			m_functionReturn.pop_back();
+		}
+	}
+	/*
+	else
+		m_errorReporter.warning(
+			_funCall.location(),
+			"Assertion checker does not yet support this type of function call."
+		);
+	*/
+
 }
 
 void SMTChecker::endVisit(Identifier const& _identifier)
@@ -417,6 +459,11 @@ void SMTChecker::endVisit(Literal const& _literal)
 			_literal.annotation().type->toString() +
 			")."
 		);
+}
+
+void SMTChecker::endVisit(Return const& _return)
+{
+	m_interface->addAssertion(expr(*_return.expression()) == newValue(*m_currentFunction.back()->returnParameters()[0]));
 }
 
 void SMTChecker::arithmeticOperation(BinaryOperation const& _op)
@@ -576,7 +623,7 @@ void SMTChecker::checkCondition(
 
 	vector<smt::Expression> expressionsToEvaluate;
 	vector<string> expressionNames;
-	if (m_currentFunction)
+	if (m_currentFunction.size())
 	{
 		if (_additionalValue)
 		{
@@ -605,7 +652,7 @@ void SMTChecker::checkCondition(
 	{
 		std::ostringstream message;
 		message << _description << " happens here";
-		if (m_currentFunction)
+		if (m_currentFunction.size())
 		{
 			message << " for:\n";
 			solAssert(values.size() == expressionNames.size(), "");
@@ -710,6 +757,25 @@ smt::CheckResult SMTChecker::checkSatisfiable()
 	return checkSatisfiableAndGenerateModel({}).first;
 }
 
+void SMTChecker::initializeFunctionParameters(FunctionDefinition const& _function)
+{
+	auto const& funParams = _function.parameters();
+	auto const& callArgs = m_functionArguments.back();
+	solAssert(funParams.size() == callArgs.size(), "");
+	for (unsigned i = 0; i < funParams.size(); ++i)
+		if (createVariable(*funParams[i]))
+			m_interface->addAssertion(callArgs[i] == currentValue(*funParams[i]));
+
+	for (auto const& variable: _function.localVariables())
+		if (createVariable(*variable))
+			setZeroValue(*variable);
+
+	if (_function.returnParameterList())
+		for (auto const& retParam: _function.returnParameters())
+			if (createVariable(*retParam))
+				setZeroValue(*retParam);
+}
+
 void SMTChecker::initializeLocalVariables(FunctionDefinition const& _function)
 {
 	for (auto const& variable: _function.localVariables())
@@ -724,6 +790,19 @@ void SMTChecker::initializeLocalVariables(FunctionDefinition const& _function)
 		for (auto const& retParam: _function.returnParameters())
 			if (createVariable(*retParam))
 				setZeroValue(*retParam);
+}
+
+void SMTChecker::removeLocalVariables(FunctionDefinition const& _function)
+{
+	for (auto const& variable: _function.localVariables())
+		m_variables.erase(m_variables.find(variable));
+
+	for (auto const& param: _function.parameters())
+		m_variables.erase(m_variables.find(&*param));
+
+	if (_function.returnParameterList())
+		for (auto const& retParam: _function.returnParameters())
+			m_variables.erase(m_variables.find(&*retParam));
 }
 
 void SMTChecker::resetStateVariables()
@@ -894,13 +973,7 @@ void SMTChecker::addPathImpliedExpression(smt::Expression const& _e)
 	m_interface->addAssertion(smt::Expression::implies(currentPathConditions(), _e));
 }
 
-void SMTChecker::removeLocalVariables()
+bool SMTChecker::isRootFunction()
 {
-	for (auto it = m_variables.begin(); it != m_variables.end(); )
-	{
-		if (it->first->isLocalVariable())
-			it = m_variables.erase(it);
-		else
-			++it;
-	}
+	return m_currentFunction.size() == 0;
 }

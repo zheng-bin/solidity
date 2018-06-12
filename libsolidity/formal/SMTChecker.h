@@ -21,6 +21,7 @@
 #include <libsolidity/formal/SolverInterface.h>
 
 #include <libsolidity/formal/SSAVariable.h>
+#include <libsolidity/formal/SymbolicFunction.h>
 
 #include <libsolidity/ast/ASTVisitor.h>
 
@@ -67,6 +68,7 @@ private:
 	virtual void endVisit(FunctionCall const& _node) override;
 	virtual void endVisit(Identifier const& _node) override;
 	virtual void endVisit(Literal const& _node) override;
+	virtual void endVisit(Return const& _node) override;
 
 	void arithmeticOperation(BinaryOperation const& _op);
 	void compareOperation(BinaryOperation const& _op);
@@ -113,6 +115,7 @@ private:
 	smt::CheckResult checkSatisfiable();
 
 	void initializeLocalVariables(FunctionDefinition const& _function);
+	void initializeFunctionParameters(FunctionDefinition const& _function);
 	void resetStateVariables();
 	void resetVariables(std::vector<VariableDeclaration const*> _variables);
 	/// Given two different branches and the touched variables,
@@ -162,7 +165,7 @@ private:
 	void addPathImpliedExpression(smt::Expression const& _e);
 
 	/// Removes the local variables of a function.
-	void removeLocalVariables();
+	void removeLocalVariables(FunctionDefinition const& _function);
 
 	std::shared_ptr<smt::SolverInterface> m_interface;
 	std::shared_ptr<VariableUsage> m_variableUsage;
@@ -172,7 +175,10 @@ private:
 	std::vector<smt::Expression> m_pathConditions;
 	ErrorReporter& m_errorReporter;
 
-	FunctionDefinition const* m_currentFunction = nullptr;
+	std::vector<FunctionDefinition const*> m_currentFunction;
+	std::vector<std::vector<smt::Expression>> m_functionArguments;
+	std::vector<smt::Expression> m_functionReturn;
+	bool isRootFunction();
 };
 
 }
