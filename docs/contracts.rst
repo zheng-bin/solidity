@@ -725,15 +725,16 @@ Up to three parameters can
 receive the attribute ``indexed`` which will cause the respective arguments
 to be stored in a special data structure as so-called "topics", which allows them to be searched for,
 for example when filtering a sequence of blocks for certain events. Events can always
-be filtered by the address of the cantract that emitted the event. Also,
+be filtered by the address of the contract that emitted the event. Also,
 the hash of the signature of the event is one of the topics except if you
 declared the event with ``anonymous`` specifier. This means that it is
 not possible to filter for specific anonymous events by name.
 
 If arrays (including ``string`` and ``bytes``) are used as indexed arguments, the
-Keccak-256 hash of it is stored as topic instead.
+Keccak-256 hash of it is stored as topic instead. This is because a topic
+can only hold a single word (32 bytes).
 
-All non-indexed arguments will be ABI-encoded into the data part of the log.
+All non-indexed arguments will be :ref:`ABI-encoded <ABI>` into the data part of the log.
 
 ::
 
