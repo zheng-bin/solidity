@@ -429,7 +429,7 @@ In this example::
     pragma solidity ^0.4.0;
 
     contract B {
-        function B() public payable {}
+        constructor() public payable {}
     }
 
     contract A {

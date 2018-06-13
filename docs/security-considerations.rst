@@ -186,7 +186,7 @@ Never use tx.origin for authorization. Let's say you have a wallet contract like
     contract TxUserWallet {
         address owner;
 
-        function TxUserWallet() public {
+        constructor() public {
             owner = msg.sender;
         }
 
@@ -209,7 +209,7 @@ Now someone tricks you into sending ether to the address of this attack wallet:
     contract TxAttackWallet {
         address owner;
 
-        function TxAttackWallet() public {
+        constructor() public {
             owner = msg.sender;
         }
 

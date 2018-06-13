@@ -229,7 +229,7 @@ creation-dependencies are not possible.
 
     contract D {
         uint x;
-        function D(uint a) public payable {
+        constructor(uint a) public payable {
             x = a;
         }
     }
