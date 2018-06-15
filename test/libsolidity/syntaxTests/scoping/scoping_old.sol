@@ -4,3 +4,5 @@ contract test {
         uint256 x = 2;
     }
 }
+// ----
+// DeclarationError: (55-56): Undeclared identifier. Did you mean to declare "x" earlier?

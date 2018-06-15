@@ -1,5 +1,3 @@
-pragma experimental "v0.5.0";
-
 contract C {
   function f() internal {
     {
@@ -8,6 +6,6 @@ contract C {
   }
 } 
 // ----
-// DeclarationError: (110-111): Undeclared identifier. Did you mean "a"?
-// DeclarationError: (113-114): Undeclared identifier. Did you mean "b"?
-// DeclarationError: (116-117): Undeclared identifier. Did you mean "c"?
+// DeclarationError: (79-80): Undeclared identifier. Did you mean to declare "a" earlier?
+// DeclarationError: (82-83): Undeclared identifier. Did you mean to declare "b" earlier?
+// DeclarationError: (85-86): Undeclared identifier. Did you mean to declare "c" earlier?

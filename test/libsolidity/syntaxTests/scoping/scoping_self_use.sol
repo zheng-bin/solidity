@@ -3,3 +3,5 @@ contract test {
         uint a = a;
     }
 }
+// ----
+// DeclarationError: (64-65): Undeclared identifier. Did you mean to declare "a" earlier?
