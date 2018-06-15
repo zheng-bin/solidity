@@ -158,7 +158,7 @@ private:
 	std::vector<eth::AssemblyItem> m_breakTags; ///< tag to jump to for a "break" statement
 	std::vector<eth::AssemblyItem> m_continueTags; ///< tag to jump to for a "continue" statement
 	/// Tag to jump to for a "return" statement, needs to be stacked because of modifiers.
-	std::vector<eth::AssemblyItem> m_returnTags;
+	std::shared_ptr<eth::AssemblyItem> m_returnTag;
 	unsigned m_modifierDepth = 0;
 	FunctionDefinition const* m_currentFunction = nullptr;
 	/// Number of parameter slots that should be freed, including modifiers and function.

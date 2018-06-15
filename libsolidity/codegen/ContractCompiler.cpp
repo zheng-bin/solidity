@@ -446,8 +446,6 @@ bool ContractCompiler::visit(FunctionDefinition const& _function)
 		if (auto c = m_context.nextConstructor(dynamic_cast<ContractDefinition const&>(*_function.scope())))
 			appendBaseConstructor(*c);
 
-	solAssert(m_returnTags.empty(), "");
-	m_returnTags.clear();
 	m_breakTags.clear();
 	m_continueTags.clear();
 	m_stackParameterCleanup = 0;
@@ -457,10 +455,9 @@ bool ContractCompiler::visit(FunctionDefinition const& _function)
 	m_loopScopedVariables.clear();
 	m_loops.clear();
 
-	eth::AssemblyItem popParameters = m_context.newTag();
-	m_returnTags.push_back(popParameters);
+	m_returnTag.reset(new eth::AssemblyItem(m_context.newTag()));
 	appendModifierOrFunctionCode();
-	m_context << popParameters;
+	m_context << *m_returnTag;
 
 	// Now we need to re-shuffle the stack. For this we keep a record of the stack layout
 	// that shows the target positions of the elements, where "-1" denotes that this element needs
@@ -814,7 +811,7 @@ bool ContractCompiler::visit(Return const& _return)
 			CompilerUtils(m_context).moveToStackVariable(*retVariable);
 	}
 
-	popAndJump(stackSizeOfCurrentLocalVariables(), m_returnTags.back());
+	popAndJump(stackSizeOfCurrentLocalVariables(), *m_returnTag);
 	return false;
 }
 
