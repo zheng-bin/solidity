@@ -15,15 +15,16 @@ Breaking Changes:
    ``implements``, ``macro``, ``mutable``, ``override``, ``partial``, ``promise``, ``reference``, ``sealed``,
    ``sizeof``, ``supports``, ``typedef`` and ``unchecked``.
  * General: Remove assembly instruction aliases ``sha3`` and ``suicide``
+ * General: C99-style scoping rules are enforced now. This was already the case in the experimental 0.5.0 mode.
  * Parser: Disallow trailing dots that are not followed by a number.
  * Type Checker: Disallow arithmetic operations for boolean variables.
  * Type Checker: Disallow conversions between ``bytesX`` and ``uintY`` of different size.
  * Remove obsolete ``std`` directory from the Solidity repository. This means accessing ``https://github.com/ethereum/soldity/blob/develop/std/*.sol`` (or ``https://github.com/ethereum/solidity/std/*.sol`` in Remix) will not be possible.
- * General: C99-style scoping are enforced now. This was already the case in the experimental 0.5.0 mode.
 
 Language Features:
  * General: Allow appending ``calldata`` keyword to types, to explicitly specify data location for arguments of external functions.
  * General: Support ``pop()`` for storage arrays.
+ * General: Scoping rules now follow the C99-style.
 
 Compiler Features:
  * Type Checker: Show named argument in case of error.
