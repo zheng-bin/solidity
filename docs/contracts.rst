@@ -1347,9 +1347,9 @@ custom types without the overhead of external function calls:
         using BigInt for BigInt.bigint;
 
         function f() public pure {
-            var x = BigInt.fromUint(7);
-            var y = BigInt.fromUint(uint(-1));
-            var z = x.add(y);
+            BigInt.bigint x = BigInt.fromUint(7);
+            BigInt.bigint y = BigInt.fromUint(uint(-1));
+            BigInt.bigint z = x.add(y);
         }
     }
 
